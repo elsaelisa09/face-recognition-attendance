@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "method": "centroid",
+  "gallery_file": "artifacts/gallery_70.npz",
+  "n_identities": 70,
+  "reference_photos_per_identity": 2,
+  "gallery_selection_seed": 42,
+  "aligned_image_size": 112,
+  "recognition_model": "weights/insightface/models/buffalo_l/w600k_r50.onnx",
+  "detection_model": "weights/insightface/models/buffalo_l/det_10g.onnx",
+  "detector_input_size": [
+    640,
+    640
+  ],
+  "detector_threshold": 0.5,
+  "recognition_threshold": 0.47224538028240204,
+  "recognition_threshold_status": "provisional_for_70_identities",
+  "threshold_calibration_scope": "60 identities, two reference photos per identity",
+  "gallery_sha256": "3c537108f59c34b38c60bbb4469cd3fdfdf305fca8d7ce4185da703c25ff55f2",
+  "source_embeddings_sha256": "7e488bc4553f33dc297f038abaad1ac1099a1e87c84848b7539a0a5dc116c29f"
+}

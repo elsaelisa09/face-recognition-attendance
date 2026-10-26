@@ -1,0 +1,48 @@
+# Kredensial dan konfigurasi pribadi
+.streamlit/secrets.toml
+.streamlit/secrets.*.toml
+.env
+.env.*
+!.env.example
+
+# Cadangan database
+backups/
+*.dump
+*.backup
+
+# Dataset wajah, hasil crop, dan metadata pribadi
+dataset/
+
+# Artefak dapat berisi nama dan embedding wajah.
+# Konfigurasi inferensi tetap disertakan.
+artifacts/*
+!artifacts/inference_config.json
+
+# Model ONNX disediakan terpisah saat deployment
+weights/
+*.onnx
+
+# Cache Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Environment Python
+.venv/
+venv/
+env/
+
+# File sementara notebook
+.ipynb_checkpoints/
+
+# Log
+*.log
+
+# File sistem
+.DS_Store
+Thumbs.db
+
+# Ditinjau dan dibersihkan sebelum dibagikan
+notebooks/
+reports/
+coba.py
