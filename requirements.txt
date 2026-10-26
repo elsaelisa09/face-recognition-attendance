@@ -1,5 +1,5 @@
-# Existing working environment: installing Streamlit alone is sufficient.
-# This list is a compatibility specification, not an environment lock file.
+# Dependensi aplikasi Streamlit, pengenalan wajah CPU, dan PostgreSQL
+
 streamlit>=1.40,<2
 insightface==0.7.3
 onnxruntime>=1.18,<2
