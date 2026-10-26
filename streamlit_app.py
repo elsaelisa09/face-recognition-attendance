@@ -437,7 +437,7 @@ def main():
         "<p>Unggah foto, pilih wajah, dan lihat hasilnya.</p>"
         "</div>"
         '<span class="fr-badge">'
-        f"{len(pipeline.person_ids)} identitas · CPU"
+        f"{len(pipeline.person_ids)} Absensi · CPU"
         "</span>"
         "</div>",
         unsafe_allow_html=True,
@@ -704,9 +704,8 @@ def main():
         != "validated_for_current_gallery"
     ):
         note = (
-            "Demo penelitian · Ambang galeri 70 identitas "
-            "masih sementara; belum divalidasi dengan "
-            "orang di luar galeri ini."
+            "Demo penelitian · Ambang penerimaan masih sementara "
+            "dan perlu divalidasi ulang untuk galeri aktif."
         )
     else:
         note = (

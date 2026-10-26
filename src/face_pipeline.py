@@ -1,4 +1,3 @@
-"""CPU inference using the user's existing InsightFace models and centroid gallery."""
 
 from __future__ import annotations
 
@@ -10,7 +9,67 @@ from pathlib import Path
 
 import numpy as np
 from PIL import Image, ImageDraw, ImageOps
+from src.model_files import ensure_models
 
+
+def _load_database_gallery():
+    from sqlalchemy import text
+    from src.database import get_engine
+
+    with get_engine().connect() as connection:
+        rows = connection.execute(text("""
+            SELECT person_id, full_name, centroid
+            FROM public.persons
+            WHERE is_active = TRUE
+            ORDER BY person_id
+        """)).mappings().all()
+
+    if not rows:
+        raise ValueError(
+            "Belum ada identitas aktif di database."
+        )
+
+    centroids = np.asarray(
+        [row["centroid"] for row in rows],
+        dtype=np.float32,
+    )
+
+    person_ids = np.asarray(
+        [row["person_id"] for row in rows],
+        dtype=str,
+    )
+
+    person_names = np.asarray(
+        [row["full_name"] for row in rows],
+        dtype=str,
+    )
+
+    if (
+        centroids.shape != (len(rows), 512)
+        or not np.isfinite(centroids).all()
+        or len(np.unique(person_ids)) != len(rows)
+    ):
+        raise ValueError(
+            "Struktur galeri database tidak valid."
+        )
+
+    norms = np.linalg.norm(centroids, axis=1)
+
+    if not np.allclose(
+        norms,
+        1.0,
+        atol=1e-5,
+        rtol=0,
+    ):
+        raise ValueError(
+            "Centroid database belum ternormalisasi."
+        )
+
+    return (
+        centroids / norms[:, None],
+        person_ids,
+        person_names,
+    )
 
 class FaceRecognitionPipeline:
     def __init__(self, project_root=None, *, model_loader=None, aligner=None):
@@ -25,35 +84,14 @@ class FaceRecognitionPipeline:
         self.threshold_status = self.config.get(
             "recognition_threshold_status", "unspecified"
         )
-        gallery_path = self.root / self.config["gallery_file"]
-        expected_hash = self.config["gallery_sha256"]
-        if hashlib.sha256(gallery_path.read_bytes()).hexdigest() != expected_hash:
-            raise ValueError("Galeri tidak sesuai hash pada inference_config.json.")
-        with np.load(gallery_path, allow_pickle=False) as gallery:
-            self.centroids = np.asarray(gallery["centroids"], dtype=np.float32).copy()
-            self.person_ids = np.asarray(gallery["person_ids"], dtype=str).copy()
-            self.person_names = np.asarray(gallery["person_names"], dtype=str).copy()
-        count = len(self.person_ids)
-        if (
-            self.centroids.ndim != 2
-            or self.centroids.shape[0] != count
-            or count != int(self.config["n_identities"])
-            or self.person_names.shape != (count,)
-            or self.person_ids.shape != (count,)
-            or len(np.unique(self.person_ids)) != count
-            or count == 0
-        ):
-            raise ValueError("Struktur galeri tidak valid.")
-        if not np.isfinite(self.centroids).all() or not np.allclose(
-            np.linalg.norm(self.centroids, axis=1), 1.0, atol=1e-5
-        ):
-            raise ValueError("Centroid harus valid dan ternormalisasi.")
+        self.centroids, self.person_ids, self.person_names = (
+            _load_database_gallery()
+        )
         self.image_size = int(self.config["aligned_image_size"])
-        detector_path = self.root / self.config["detection_model"]
-        encoder_path = self.root / self.config["recognition_model"]
-        for path in (detector_path, encoder_path):
-            if not path.is_file():
-                raise FileNotFoundError(f"Model lokal belum tersedia: {path}")
+        detector_path, encoder_path = ensure_models(
+            self.root,
+            self.config,
+        )
         if model_loader is None:
             from insightface import model_zoo
 
@@ -197,38 +235,60 @@ class FaceRecognitionPipeline:
         return faces
 
     def _match(self, aligned_bgr):
+        centroids, person_ids, person_names = (
+            _load_database_gallery()
+        )
+
         with self._lock:
             vector = np.asarray(
-                self.encoder.get_feat(aligned_bgr), dtype=np.float32
+                self.encoder.get_feat(aligned_bgr),
+                dtype=np.float32,
             ).reshape(-1)
+
         length = np.linalg.norm(vector)
+
         if (
-            vector.size != self.centroids.shape[1]
+            vector.size != centroids.shape[1]
             or not np.isfinite(vector).all()
             or not np.isfinite(length)
             or length <= 1e-12
         ):
-            raise ValueError("Encoder menghasilkan embedding tidak valid.")
+            raise ValueError(
+                "Encoder menghasilkan embedding tidak valid."
+            )
+
         vector = vector / length
-        scores = self.centroids @ vector
+
+        scores = np.clip(
+            centroids @ vector,
+            -1.0,
+            1.0,
+        )
+
         order = np.argsort(-scores, kind="stable")
         best = int(order[0])
+
         similarity = float(scores[best])
         accepted = similarity >= self.threshold
+
         return {
             "status": "recognized" if accepted else "unknown",
             "accepted": bool(accepted),
-            "person_id": str(self.person_ids[best]) if accepted else None,
-            "person_name": str(self.person_names[best]) if accepted else None,
-            "candidate_person_id": str(self.person_ids[best]),
-            "candidate_person_name": str(self.person_names[best]),
+            "person_id": (
+                str(person_ids[best]) if accepted else None
+            ),
+            "person_name": (
+                str(person_names[best]) if accepted else None
+            ),
+            "candidate_person_id": str(person_ids[best]),
+            "candidate_person_name": str(person_names[best]),
             "similarity": similarity,
             "threshold": self.threshold,
             "threshold_status": self.threshold_status,
             "top_matches": [
                 {
-                    "person_id": str(self.person_ids[index]),
-                    "person_name": str(self.person_names[index]),
+                    "person_id": str(person_ids[index]),
+                    "person_name": str(person_names[index]),
                     "similarity": float(scores[index]),
                 }
                 for index in order[:3]
