@@ -45,4 +45,6 @@ Thumbs.db
 # Ditinjau dan dibersihkan sebelum dibagikan
 notebooks/
 reports/
-coba.py
+
+# Script pemeriksaan lokal
+/check_*.py
