@@ -133,7 +133,7 @@ Hasil ini merupakan **hasil validasi untuk pemilihan threshold**, bukan estimasi
 | Representasi wajah | ArcFace — `w600k_r50.onnx` |
 | Inferensi CPU | InsightFace 0.7.3 dan ONNX Runtime |
 | Pengolahan gambar | OpenCV, Pillow, NumPy |
-| Antarmuka | Streamlit |
+| UI | Streamlit |
 | Penyimpanan | Supabase PostgreSQL |
 | Akses database | SQLAlchemy dan Psycopg |
 | Deployment | Streamlit Community Cloud |
