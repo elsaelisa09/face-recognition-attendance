@@ -48,3 +48,7 @@ reports/
 
 # Script pemeriksaan lokal
 /check_*.py
+
+
+migrate_to_supabase.py
+APP_SETUP.md
