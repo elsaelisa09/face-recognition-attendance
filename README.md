@@ -16,7 +16,7 @@ SCRFD · ArcFace · Centroid · Cosine Similarity · Open-Set Identification
 ![Foto](https://img.shields.io/badge/foto-279-64748B)
 ![Referensi](https://img.shields.io/badge/referensi-2_foto_per_identitas-7C3AED)
 
-[Demo Streamlit](URL_DEMO_STREAMLIT) · [Highlights](#highlights) · [Alur Sistem](#alur-sistem) · [Metode](#metode) · [Hasil](#hasil-evaluasi) · [Dataset](#dataset) · [Setup](SETUP.md)
+[Demo Streamlit](https://face-recognition-attendance-g5dnupb7etzn9gihmmbpwy.streamlit.app/) · [Highlights](#highlights) · [Alur Sistem](#alur-sistem) · [Metode](#metode) · [Hasil](#hasil-evaluasi) · [Dataset](#dataset) · [Setup](SETUP.md)
 
 </div>
 
@@ -227,7 +227,7 @@ Prioritas pengembangan:
 
 ## 📖 Dokumentasi Teknis
 
-Panduan instalasi, konfigurasi Supabase, pengelolaan Secrets, penyediaan model, dan deployment tersedia terpisah di **[SETUP.md](SETUP.md)**. Untuk mencoba aplikasi, gunakan **[demo Streamlit](URL_DEMO_STREAMLIT)**.
+Panduan instalasi, konfigurasi Supabase, pengelolaan Secrets, penyediaan model, dan deployment tersedia terpisah di **[SETUP.md](SETUP.md)**. Untuk mencoba aplikasi, gunakan **[demo Streamlit](https://face-recognition-attendance-g5dnupb7etzn9gihmmbpwy.streamlit.app/)**.
 
 ## 📚 Referensi dan Lisensi Model
 
