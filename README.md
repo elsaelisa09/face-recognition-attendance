@@ -40,17 +40,11 @@ Proyek pengenalan wajah dengan data terbatas yang dikembangkan menjadi **prototi
 
 ## 🏗️ Alur Sistem
 
-```mermaid
-flowchart TD
-    A["Foto dari unggahan atau kamera"] --> B["Deteksi wajah: SCRFD"]
-    B --> C["Pilih satu wajah dan lakukan alignment 112 × 112"]
-    C --> D["Embedding ArcFace: 512 dimensi + normalisasi L2"]
-    D --> E["Cosine similarity dan kandidat dengan skor tertinggi"]
-    G["Centroid identitas aktif di Supabase"] --> E
-    E --> F{"Skor memenuhi threshold?"}
-    F -->|Ya| H["Catat atau tampilkan absensi harian WIB"]
-    F -->|Tidak| I["Tidak dikenal; absensi tidak dicatat"]
-```
+<p align="center">
+  <img src="architecture.png" alt="Arsitektur Face Recognition Attendance: dua foto referensi membentuk centroid; foto absensi diproses melalui SCRFD, alignment, ArcFace dan normalisasi L2, lalu dibandingkan dengan galeri Supabase dan threshold" width="100%">
+</p>
+
+Diagram memisahkan jalur pendaftaran identitas dan jalur pengenalan untuk absensi. Kedua jalur menggunakan model serta preprocessing yang sama.
 
 SCRFD dan ArcFace digunakan sebagai **model pretrained**. Proyek ini mengekstrak fitur, membentuk galeri, dan mengkalibrasi aturan penerimaan; bobot kedua model tidak di-training atau di-fine-tune menggunakan dataset mahasiswa.
 
@@ -190,14 +184,16 @@ Pendaftaran langsung aktif tanpa persetujuan admin. Pendaftar diminta menggunaka
 <details>
 <summary><b>Alur notebook eksperimen</b></summary>
 
-Notebook eksperimen dijalankan secara lokal dan tidak disertakan dalam repository publik karena outputnya dapat memuat data pribadi.
+Notebook asli beserta output pribadi tetap privat. Salinan kode tanpa output, path pribadi, atau metadata sesi tersedia di **[notebooks_public/](notebooks_public/README.md)** untuk mengulang workflow menggunakan dataset sendiri. Dataset dan artefak wajah mahasiswa tidak disertakan.
 
-| Notebook lokal | Isi utama |
+| Notebook publik | Isi utama |
 |---|---|
-| `01_data_audit.ipynb` | Audit file, standardisasi, deteksi, review wajah, crop dan alignment |
-| `02_model_comparison(2).ipynb` | Ekstraksi embedding, nearest template vs centroid, few-shot, dan robustness |
-| `03_open_set_evaluation.ipynb` | Pembagian galeri/validasi/test, kalibrasi threshold, dan evaluasi open-set |
-| `04_app_preparation.ipynb` | Galeri awal 70 identitas dan konfigurasi inferensi |
+| [01_data_audit.ipynb](notebooks_public/01_data_audit.ipynb) | Audit file, standardisasi, deteksi, review wajah, crop dan alignment |
+| [02_model_comparison.ipynb](notebooks_public/02_model_comparison.ipynb) | Ekstraksi embedding, nearest template vs centroid, few-shot, dan robustness |
+| [03_open_set_evaluation.ipynb](notebooks_public/03_open_set_evaluation.ipynb) | Pembagian galeri/validasi/test, kalibrasi threshold, dan evaluasi open-set |
+| [04_app_preparation.ipynb](notebooks_public/04_app_preparation.ipynb) | Galeri seluruh identitas dan konfigurasi inferensi |
+
+Salinan publik memiliki path relatif dan jumlah data dinamis; notebook audit tetap memerlukan checkpoint review manual. Angka README merupakan hasil eksperimen asli, bukan hasil eksekusi ulang salinan publik. Petunjuk dan batas reproduksi tersedia pada [SETUP.md](SETUP.md).
 
 Manifest menyimpan pembagian foto dan hubungan antartahap. Hash SHA-256 digunakan untuk memeriksa konsistensi artefak galeri, embedding, dan pembagian data saat evaluasi.
 

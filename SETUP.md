@@ -21,6 +21,42 @@ Panduan ini tidak menyertakan dataset privat mahasiswa ITERA. Menjalankan aplika
 
 Folder data privat, backup, bobot ONNX, dan script pemeriksaan lokal dikecualikan melalui `.gitignore`. Field galeri eksperimen pada konfigurasi dapat tetap tersedia sebagai metadata; alur aplikasi yang telah diperbarui membaca galeri aktif dari Supabase.
 
+## Reproduksi Eksperimen dengan Dataset Sendiri
+
+Ada dua alur yang berbeda:
+
+| Tujuan | Kebutuhan |
+|---|---|
+| Menjalankan aplikasi absensi | Kode aplikasi, model ONNX, konfigurasi, serta Supabase yang sudah berisi galeri aktif |
+| Mengulang workflow penelitian | Notebook publik, dependensi penelitian, dan dataset sendiri; Supabase tidak diperlukan untuk menjalankan notebook |
+
+Notebook asli di `notebooks/` tetap privat. Versi kode publik ada di **[notebooks_public/](notebooks_public/README.md)**, tanpa output cell, foto, nama peserta, metadata sesi, atau path pribadi penulis. Kode pratinjau tetap tersedia untuk review lokal; menjalankannya pada dataset pribadi dapat menghasilkan output sensitif lagi.
+
+Pasang dependensi tambahan pada environment proyek:
+
+```bash
+python -m pip install -r requirements-research.txt
+python -m jupyter lab
+```
+
+Gunakan struktur `dataset/raw/<label_orang>/<foto>`, dengan 3–4 foto berbeda per identitas untuk protokol notebook ini. Label pseudonim disarankan. Jalankan notebook 01 sampai 04 secara berurutan. Notebook 01 memiliki checkpoint review manual untuk foto berisi beberapa wajah, sehingga memerlukan interaksi; sel pemilihan wajah tidak dijalankan otomatis.
+
+Notebook 03 menggunakan default lima identitas unknown validasi dan lima unknown test, dengan sisanya sebagai known. Default membutuhkan minimal 12 identitas. Sesuaikan parameter untuk dataset sendiri; seluruh identitas unknown harus berada di luar galeri dan kelompok unknown validasi/test harus berbeda. Foto galeri, validasi, dan test juga dipisahkan sesuai manifest.
+
+Notebook publik diturunkan dari eksperimen asli, dengan urutan dibersihkan, path relatif, jumlah identitas/foto dinamis, dan hasil galeri bernama sesuai jumlah identitas. Pembagian 30 seed, metode pencocokan, transformasi robustness, dan kebijakan pemilihan threshold tetap mengikuti eksperimen asli. Kode telah diperiksa sintaksnya dan bagian split/kalibrasi/ekspor diuji memakai embedding sintetis; belum dijalankan ulang end-to-end dengan dataset wajah asli atau model ONNX dalam revisi dokumentasi ini.
+
+**Yang dapat diulang:** alur pengolahan, ekstraksi fitur, protokol evaluasi, dan kalibrasi pada data milik sendiri. **Yang tidak dapat dijamin sama:** angka hasil eksperimen awal, threshold 0,472245, dan galeri mahasiswa, karena dataset asli tidak dibagikan. Hash bertujuan memeriksa konsistensi artefak lokal, bukan membuat dataset privat dapat direkonstruksi.
+
+Notebook 04 menulis galeri dan `artifacts/inference_config.json` secara lokal. Gunakan checkout eksperimen terpisah jika tidak ingin mengubah artefak aplikasi yang sedang digunakan. Artefak tersebut tetap privat dan tidak perlu dipush. Notebook ini **tidak mengisi Supabase secara otomatis**. Keterbatasan bootstrap galeri kosong dan asumsi 70 identitas pada importer awal tetap berlaku; konfigurasi jumlah identitas dinamis pada notebook tidak mengubah batas importer tersebut.
+
+Sebelum membagikan notebook yang pernah dijalankan, bersihkan salinan publik:
+
+```bash
+python scripts/clear_notebook_outputs.py
+```
+
+Script hanya membersihkan `notebooks_public/`, bukan notebook asli. Tinjau juga source code, teks Markdown, screenshot, diff Git, dan file yang akan di-commit. Menghapus output tidak otomatis menghapus data yang ditulis langsung di source atau riwayat Git.
+
 ## Menjalankan Secara Lokal
 
 ### 1. Prasyarat
@@ -192,11 +228,11 @@ Model yang tersimpan di filesystem Streamlit dapat perlu diunduh ulang ketika li
 - Detail exception disembunyikan dari browser; log server tetap perlu dikelola agar tidak memuat data sensitif.
 - Embedding tetap diperlakukan sebagai data sensitif, meskipun berbentuk angka.
 
-Dataset, foto peserta, embedding, notebook dengan output pribadi, dan backup tidak dibagikan melalui repository.
+Dataset, foto peserta, embedding, notebook privat dengan output pribadi, dan backup tidak dibagikan melalui repository.
 
 ## Berkas Repository dan Screenshot
 
-Simpan `README.md`, `SETUP.md`, dan screenshot **`image.png`** di folder utama repository. README menggunakan tautan relatif berikut agar gambar langsung tampil di GitHub:
+Simpan `README.md`, `SETUP.md`, screenshot **`image.png`**, dan diagram **`architecture.png`** di folder utama repository. README menggunakan tautan relatif berikut agar gambar langsung tampil di GitHub:
 
 ```markdown
 ![Tampilan aplikasi Face Recognition Attendance](image.png)
@@ -211,7 +247,8 @@ Berkas yang dikecualikan melalui `.gitignore` mencakup:
 - `.streamlit/secrets.toml` dan file kredensial lain.
 - `dataset/`, foto peserta, dan file embedding `.npz`.
 - `backups/` dan arsip database.
-- `notebooks/`, `reports/`, serta `coba.py` yang belum ditinjau untuk publikasi.
+- `notebooks/` asli, `reports/`, serta `coba.py` yang belum ditinjau untuk publikasi.
+- `.ipynb_checkpoints/` di folder mana pun; `notebooks_public/` hanya berisi kode yang sudah ditinjau dan dibersihkan.
 - `weights/`, file ONNX, environment Python, cache, dan log.
 - Script pemeriksaan lokal `check_*.py`.
 

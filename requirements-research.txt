@@ -1,0 +1,8 @@
+# Install the existing application requirements first via this include.
+# This is an additional dependency list, not a complete environment lock.
+-r requirements.txt
+jupyterlab
+ipykernel
+pandas
+scikit-learn
+tqdm
