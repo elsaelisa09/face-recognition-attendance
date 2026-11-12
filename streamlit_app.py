@@ -3,6 +3,7 @@ import hashlib
 import html
 import io
 import logging
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 import streamlit as st
@@ -14,8 +15,8 @@ from src.attendance_service import mark_attendance
 ROOT = Path(__file__).resolve().parent
 
 st.set_page_config(
-    page_title="Face Recognition",
-    page_icon="🔎",
+    page_title="Sistem Kehadiran",
+    page_icon="📋",
     layout="wide",
 )
 
@@ -47,8 +48,14 @@ STYLE = """
     padding: .65rem;
 }
 
-[data-testid="stFileUploaderDropzoneInstructions"] small {
-    display: none;
+/* Ukuran teks petunjuk pada kotak unggah foto */
+[data-testid="stFileUploaderDropzone"] span {
+    font-size: 13px !important;
+}
+
+[data-testid="stFileUploaderDropzone"] small {
+    display: block;
+    font-size: 11px !important;
 }
 
 [data-testid="stCameraInput"] video,
@@ -267,6 +274,146 @@ STYLE = """
         min-height: 300px;
     }
 }
+
+/* Attendance page visual system */
+.stApp { background: #f5f7fb; color: #14213d; }
+.block-container { max-width: 1320px; padding-top: 1.2rem; }
+.fr-header { padding: 1.1rem 0 1rem; }
+.fr-eyebrow { color: #2563eb; font-size: .7rem; font-weight: 700; letter-spacing: .12em; margin-bottom: .45rem; }
+.fr-header h1 { font-size: 2rem; letter-spacing: -.04em; }
+.fr-header p { font-size: .92rem; margin-top: .45rem; }
+.fr-badge { background: #fff; color: #334155; border: 1px solid #e2e8f0; font-size: .8rem; font-weight: 600; }
+.st-key-fr_input, .st-key-fr_output { border: 1px solid #e2e8f0 !important; box-shadow: 0 5px 20px rgba(15,23,42,.035); border-radius: 18px; }
+.fr-title { font-size: 1.08rem; font-weight: 700; margin-bottom: .35rem; }
+.fr-preview { border: 1px dashed #cbd5e1; background: #f7f9fc; border-radius: 14px; }
+.fr-placeholder strong { color: #25344d; font-size: .96rem; }
+.fr-result h2 { font-size: 1.45rem; }
+.fr-crop { width: 104px; height: 104px; border-radius: 50%; object-fit: cover; }
+.fr-scores { max-width: 340px; }
+.fr-score { background: #f6f8fc; }
+.fr-note { color: #64748b; padding: .2rem 0; }
+.fr-guide {
+    color: #334155;
+    background: #eef4ff;
+    border: 1px solid #dbeafe;
+    border-radius: 12px;
+    padding: .7rem .9rem;
+    margin: .15rem 0 .8rem;
+    font-size: .84rem;
+    line-height: 1.5;
+}
+.st-key-fr_input [data-testid="stBaseButton-primary"] { border-radius: 10px; }
+/* Compact layout for typical laptop viewports. The page remains scrollable
+   when browser zoom, a short screen, or additional content requires it. */
+@media (min-width: 701px) {
+    :root {
+        --fr-panel-height: clamp(345px, calc(100dvh - 315px), 475px);
+        --fr-preview-height: clamp(90px, calc(100dvh - 565px), 195px);
+    }
+
+    .block-container { padding: .55rem 1.5rem .6rem; }
+    .block-container > [data-testid="stVerticalBlock"] { gap: .4rem; }
+    .fr-header { padding: .25rem 0 .2rem; }
+    .fr-header h1 { font-size: 1.55rem; }
+    .fr-header p { font-size: .83rem; margin-top: .2rem; }
+    .fr-eyebrow { margin-bottom: .15rem; }
+    .fr-guide { padding: .45rem .7rem; margin: 0 0 .15rem; font-size: .8rem; }
+    .st-key-fr_input [data-testid="stVerticalBlock"],
+    .st-key-fr_output [data-testid="stVerticalBlock"] { gap: .35rem; }
+    [data-testid="stFileUploaderDropzone"] { padding: .4rem; }
+    .fr-title { font-size: 1rem; margin-bottom: 0; }
+    .fr-preview { margin-bottom: .2rem; }
+    .fr-result { min-height: calc(var(--fr-panel-height) - 90px); gap: .4rem; padding: .4rem; }
+    .fr-result h2 { font-size: 1.2rem; }
+    .fr-crop { width: 78px; height: 78px; }
+    .fr-score { padding: .4rem .5rem; }
+    .fr-score strong { font-size: 1.05rem; }
+    .fr-note { font-size: .7rem; line-height: 1.35; }
+}
+@media (max-width: 700px) {
+    .block-container { padding: .75rem .9rem 1.2rem; }
+    .fr-header { align-items: flex-start; flex-direction: column; gap: .6rem; padding: .45rem 0; }
+    .fr-header h1 { font-size: 1.6rem; }
+    .fr-guide { margin-bottom: .55rem; padding: .65rem .75rem; }
+    .st-key-fr_input, .st-key-fr_output { min-height: 0; }
+    .fr-preview { height: clamp(170px, 30dvh, 240px); }
+    .fr-result { min-height: 220px; padding: .8rem; }
+    .fr-scores { max-width: 100%; }
+}
+
+/* Keep the introduction in normal flow so text never overlaps. */
+.fr-intro { display: flex; flex-direction: column; gap: .7rem; }
+.fr-header { padding: 0; margin: 0; min-height: 0; }
+.fr-heading { min-width: 0; }
+.fr-header h1 { display: block; line-height: 1.2; margin: 0; padding: 0; }
+.fr-subtitle { color: #64748b; font-size: .84rem; line-height: 1.45; margin-top: .3rem; }
+.fr-guide { margin: 0; line-height: 1.45; }
+
+@media (min-width: 701px) {
+    :root {
+        --fr-panel-height: clamp(360px, calc(100dvh - 350px), 450px);
+        --fr-preview-height: clamp(85px, calc(100dvh - 590px), 160px);
+    }
+    .block-container { max-width: 1200px; padding: .7rem 2rem 1rem; }
+    .fr-intro { gap: .65rem; }
+    .fr-header { padding: 0; }
+    .fr-guide { padding: .55rem .8rem; }
+    /* Stretch the two cards together, while allowing their contents to grow. */
+    div[data-testid="stHorizontalBlock"]:has(.st-key-fr_input) {
+        align-items: stretch;
+    }
+    div[data-testid="stHorizontalBlock"]:has(.st-key-fr_input) > div[data-testid="stColumn"] > div[data-testid="stVerticalBlock"] {
+        height: 100%;
+    }
+    .st-key-fr_input, .st-key-fr_output { height: 100%; }
+    .fr-result { min-height: calc(var(--fr-panel-height) - 85px); }
+    .fr-note { margin: 0; }
+}
+@media (max-width: 700px) {
+    .fr-intro { gap: .65rem; }
+    .fr-header { flex-direction: row; align-items: flex-start; flex-wrap: wrap; gap: .5rem; }
+    .fr-header h1 { font-size: 1.5rem; }
+    .fr-subtitle { font-size: .8rem; }
+    .fr-guide { margin: 0; }
+    .st-key-fr_input, .st-key-fr_output { height: auto; min-height: 0; }
+}
+
+/* Keterangan tim dibuat lebih ringkas pada desktop dan HP. */
+p.fr-note {
+    font-size: 14px !important;
+    line-height: 1.4;
+}
+/* Jarak antarbagian halaman kehadiran. */
+.fr-intro {
+    gap: 1rem;
+    padding-bottom: 1rem;
+}
+
+.fr-guide {
+    padding: .7rem .9rem;
+}
+
+p.fr-note {
+    padding-top: .7rem;
+}
+
+@media (min-width: 701px) {
+    .fr-intro { gap: 1rem; }
+    .fr-guide { padding: .7rem .9rem; }
+    .st-key-fr_input [data-testid="stVerticalBlock"],
+    .st-key-fr_output [data-testid="stVerticalBlock"] {
+        gap: .65rem;
+    }
+}
+
+@media (max-width: 700px) {
+    .fr-intro { gap: .85rem; padding-bottom: .8rem; }
+    .st-key-fr_input [data-testid="stVerticalBlock"],
+    .st-key-fr_output [data-testid="stVerticalBlock"] {
+        gap: .75rem;
+    }
+}
+
 </style>
 """
 
@@ -317,7 +464,7 @@ def show_result(result, message):
         st.markdown(
             '<div class="fr-result">'
             '<div class="fr-symbol">◎</div>'
-            "<h2>Siap mengenali wajah</h2>"
+            "<h2>Siap melakukan absensi</h2>"
             f"<p>{html.escape(message)}</p>"
             "</div>",
             unsafe_allow_html=True,
@@ -354,9 +501,9 @@ def show_result(result, message):
     )
 
     status = (
-        "Wajah dikenali"
+        "Identitas dikenali"
         if accepted
-        else "Di bawah ambang penerimaan"
+        else "Wajah belum dikenali"
     )
 
     status_class = (
@@ -390,6 +537,16 @@ def show_result(result, message):
     )
 
 
+@st.dialog("Kehadiran berhasil dicatat 🎉")
+def show_attendance_success(result):
+    st.success("Absensi kamu sudah tercatat. Terima kasih!")
+    st.text(f"Nama: {result['person_name']}")
+    st.text(f"Waktu: {result['checked_in_at_wib']}")
+
+    if st.button("Tutup", key="close_attendance_success"):
+        st.rerun()
+
+
 def clear_result():
     st.session_state.pop("face_result", None)
     st.session_state.pop("face_result_key", None)
@@ -421,7 +578,7 @@ def main():
 
     menu = st.radio(
         "Menu",
-        ["Pengenalan wajah", "Daftar wajah"],
+        ["Absensi", "Daftar wajah"],
         horizontal=True,
         key="main_navigation",
     )
@@ -430,16 +587,22 @@ def main():
         render_registration(pipeline)
         return
 
+    today = datetime.now(timezone(timedelta(hours=7)))
+    date_wib = today.strftime("%d/%m/%Y")
+
     st.markdown(
+        '<div class="fr-intro">'
         '<div class="fr-header">'
-        "<div>"
-        "<h1>Face Recognition</h1>"
-        "<p>Unggah foto, pilih wajah, dan lihat hasilnya.</p>"
-        "</div>"
-        '<span class="fr-badge">'
-        f"{len(pipeline.person_ids)} Absensi · CPU"
-        "</span>"
-        "</div>",
+        '<div class="fr-heading"><div class="fr-eyebrow">SISTEM KEHADIRAN</div>'
+        '<h1>Sistem kehadiran</h1>'
+        '</div>'
+        f'<span class="fr-badge">📅 {date_wib} · WIB</span>'
+        '</div>'
+        '<div class="fr-guide">'
+        '<strong>Sudah daftar?</strong> Langsung lakukan absensi. '
+        '<strong>Belum?</strong> Pilih Daftar wajah dan siapkan 2 foto berbeda; '
+        'setiap foto harus menampilkan wajah kamu sendiri.'
+        '</div></div>',
         unsafe_allow_html=True,
     )
 
@@ -449,7 +612,7 @@ def main():
     )
 
     result = None
-    message = "Unggah foto untuk memulai."
+    message = "Ambil atau unggah foto untuk memulai absensi."
 
     with left:
         with st.container(
@@ -457,7 +620,7 @@ def main():
             key="fr_input",
         ):
             st.markdown(
-                '<p class="fr-title">Foto masukan</p>',
+                '<p class="fr-title">Verifikasi wajah</p>',
                 unsafe_allow_html=True,
             )
 
@@ -598,7 +761,7 @@ def main():
 
                     message = (
                         "Pilih nomor pada foto, "
-                        "lalu klik Kenali wajah."
+                        "lalu klik Catat kehadiran."
                     )
 
                 elif faces:
@@ -606,7 +769,7 @@ def main():
                         "1 wajah terdeteksi · siap diproses"
                     )
                     message = (
-                        "Klik Kenali wajah untuk melihat hasil."
+                        "Klik Catat kehadiran untuk melanjutkan."
                     )
 
                 elif image is not None:
@@ -632,7 +795,7 @@ def main():
 
             with button_col:
                 clicked = st.button(
-                    "Kenali wajah",
+                    "Catat kehadiran",
                     type="primary",
                     use_container_width=True,
                     disabled=selected_index is None,
@@ -666,6 +829,9 @@ def main():
                         "Wajah belum dapat diproses. "
                         "Coba foto lain."
                     )
+                else:
+                    if recognition.get("attendance_status") == "recorded":
+                        show_attendance_success(recognition)
 
             if error:
                 st.error(error)
@@ -675,11 +841,11 @@ def main():
                 st.caption(
                     "Pilih wajah utama sesuai label pada foto."
                 )
-            else:
-                st.caption(
-                    "Foto masukan tidak disimpan "
-                    "ke disk oleh aplikasi."
-                )
+
+            st.caption(
+                "Foto kamu tidak disimpan. Saat daftar, sistem menyimpan "
+                "nama dan fitur wajahmu dalam bentuk angka."
+            )
 
             if (
                 st.session_state.get("face_result_key")
@@ -693,28 +859,17 @@ def main():
             key="fr_output",
         ):
             st.markdown(
-                '<p class="fr-title">Hasil pengenalan</p>',
+                '<p class="fr-title">Status kehadiran</p>',
                 unsafe_allow_html=True,
             )
 
             show_result(result, message)
 
-    if (
-        pipeline.threshold_status
-        != "validated_for_current_gallery"
-    ):
-        note = (
-            "Demo penelitian · Ambang penerimaan masih sementara "
-            "dan perlu divalidasi ulang untuk galeri aktif."
-        )
-    else:
-        note = (
-            "Demo penelitian · Hasil bergantung "
-            "pada kualitas foto."
-        )
-
     st.markdown(
-        f'<p class="fr-note">{note}</p>',
+        '<p class="fr-note">'
+        'Proyek mata kuliah Deep Learning · Tim Mata Trio Kwek Kwek<br>'
+        'Elsa Elisa Yohana · Machzaul Harmansyah · Sikah Nubuahtul'
+        '</p>',
         unsafe_allow_html=True,
     )
 
